@@ -56,8 +56,15 @@ export class AIAssistant {
 	// AI suggestion loading notice
 	private loadingNotice: Notice | null = null;
 
-	constructor() {
-		// Instance variables are used in class methods
+	// Dependencies
+	private mindMapService: any;
+	private messages: any;
+	private callbacks: AIAssistantCallbacks;
+
+	constructor(mindMapService: any, messages: any, callbacks: AIAssistantCallbacks) {
+		this.mindMapService = mindMapService;
+		this.messages = messages;
+		this.callbacks = callbacks;
 	}
 
 	/**
@@ -157,26 +164,29 @@ export class AIAssistant {
 		}
 
 		// Clean up previous loading notice (if exists)
-		if (this.loadingNotice) {
-			this.loadingNotice.hide();
-			this.loadingNotice = null;
+		// Notice: Obsidian's Notice class doesn't have a hide() method
+		// We'll reuse the same Notice object by updating its message
+		if (!this.loadingNotice) {
+			// Create new loading notice (30 second timeout)
+			this.loadingNotice = new Notice(this.messages.format(
+				this.messages.notices.aiAnalyzing,
+				{ nodeText }
+			), 30000);
+		} else {
+			// Update existing notice message
+			this.loadingNotice.setMessage(this.messages.format(
+				this.messages.notices.aiAnalyzing,
+				{ nodeText }
+			));
 		}
-
-		// Show persistent loading notice (no timeout, will display until manually hidden)
-		this.loadingNotice = new Notice(this.messages.format(
-			this.messages.notices.aiAnalyzing,
-			{ nodeText }
-		), 0);
 
 		try {
 			// Call MindMapService to get suggestions
 			const suggestions = await this.mindMapService.suggestChildNodes(node.data);
 
-			// Hide loading notice after success
-			if (this.loadingNotice) {
-				this.loadingNotice.hide();
-				this.loadingNotice = null;
-			}
+			// Clear loading notice reference after success
+			// Notice will auto-dismiss after timeout (30 seconds)
+			this.loadingNotice = null;
 
 			if (suggestions.length === 0) {
 				new Notice(this.messages.notices.aiNoSuggestions);
@@ -187,11 +197,9 @@ export class AIAssistant {
 			this.showSuggestionsPanel(node, suggestions);
 		} catch (error) {
 
-			// Hide loading notice on error too
-			if (this.loadingNotice) {
-				this.loadingNotice.hide();
-				this.loadingNotice = null;
-			}
+			// Clear loading notice reference on error
+			// Notice will auto-dismiss after timeout (30 seconds)
+			this.loadingNotice = null;
 
 			const errorMsg = this.messages.format(
 				this.messages.notices.aiFailed,
@@ -390,11 +398,9 @@ export class AIAssistant {
 		// Hide suggestion panel
 		this.hideSuggestionsPanel();
 
-		// Hide loading notice
-		if (this.loadingNotice) {
-			this.loadingNotice.hide();
-			this.loadingNotice = null;
-		}
+		// Clear loading notice reference
+		// Notice will auto-dismiss after timeout (30 seconds)
+		this.loadingNotice = null;
 
 		// Clear selected suggestions
 		this.selectedSuggestions.clear();

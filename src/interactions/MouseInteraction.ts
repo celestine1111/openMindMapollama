@@ -174,7 +174,8 @@ export class MouseInteraction {
 	attachCanvasClickHandler(
 		svg: d3.Selection<SVGSVGElement, unknown, null, undefined>
 	): void {
-		const svgNode = svg.node() as SVGSVGElement;
+		const svgNode = svg.node();
+		if (!svgNode) return;
 
 		svgNode.addEventListener("click", (event: MouseEvent) => {
 			const target = event.target;

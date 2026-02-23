@@ -68,9 +68,13 @@ export interface ButtonRendererCallbacks {
  * Manages button rendering and interaction
  */
 export class ButtonRenderer {
+	// Dependencies
+	private textMeasurer: any;
+	private callbacks: ButtonRendererCallbacks;
 
-	constructor() {
-		// Instance variables are used in class methods
+	constructor(mindMapService: any, textMeasurer: any, callbacks: ButtonRendererCallbacks) {
+		this.textMeasurer = textMeasurer;
+		this.callbacks = callbacks;
 	}
 
 	/**

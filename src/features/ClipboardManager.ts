@@ -208,6 +208,7 @@ export class ClipboardManager {
 		textArea.select();
 
 		try {
+			// eslint-disable-next-line @typescript-eslint/no-deprecated
 			const successful = document.execCommand('copy');
 			if (successful) {
 				this.showSuccessNotice(this.messages.notices.nodeTextCopied);

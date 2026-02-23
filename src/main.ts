@@ -63,9 +63,10 @@ export default class MindMapPlugin extends Plugin {
 	async onload() {
 		await this.loadSettings();
 
-		// Initialize encryption utility with platform info
-		// eslint-disable-next-line deprecation/deprecation
-		const deviceInfo = `obsidian-mindmap-plugin-${navigator.userAgent}-${navigator.language}`;
+		// Initialize encryption utility with vault identifier
+		// Use vault name as device identifier instead of navigator API
+		const vaultName = this.app.vault.getName();
+		const deviceInfo = `obsidian-mindmap-plugin-${vaultName}`;
 		EncryptionUtil.initialize(deviceInfo);
 
 		// 🔒 Phase 1: Device detection and configuration initialization
@@ -99,7 +100,7 @@ export default class MindMapPlugin extends Plugin {
 		await this.loadStyles();
 
 		// Add ribbon icon
-		const ribbonIconEl = this.addRibbonIcon('brain', 'openMindMap', (evt: MouseEvent) => {
+		const ribbonIconEl = this.addRibbonIcon('brain', 'Open mindmap', (evt: MouseEvent) => {
 			void this.activateView();
 		});
 		ribbonIconEl.addClass('mind-map-ribbon-class');
@@ -107,7 +108,7 @@ export default class MindMapPlugin extends Plugin {
 		// Command: Open mind map view
 		this.addCommand({
 			id: 'open-view',
-			name: 'Open Mindmap view',
+			name: 'Open mindmap view',
 			callback: () => {
 				void this.activateView();
 			}
@@ -402,15 +403,6 @@ export default class MindMapPlugin extends Plugin {
 
 // 从 mindmap-core.ts 导入接口和功能
 
-interface CoreLayoutNode {
-    text: string;
-    depth: number;
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-}
-
 class MindMapView extends ItemView {
 	filePath: string | null = null;
 	private needsContentLoading = false;
@@ -483,7 +475,7 @@ class MindMapView extends ItemView {
 		}
 
 		// Final fallback
-		return "openMindMap";
+		return "Open mindmap";
 	}
 
 	getIcon() {
@@ -544,7 +536,7 @@ class MindMapView extends ItemView {
 		container.addClass('mind-map-container');
 
 		// Show loading interface
-		container.createEl("h4", { text: "Loading openMindMap..." });
+		container.createEl("h4", { text: "Loading mind map..." });
 		container.createEl("p", { text: "Initializing..." });
 
 		// Set up callbacks for renderer
@@ -569,7 +561,8 @@ class MindMapView extends ItemView {
 		container.empty();
 
 		// Show loading status
-		container.createEl("h4", { text: "🧠 openMindMap" });
+		// eslint-disable-next-line obsidianmd/ui/sentence-case
+		container.createEl("h4", { text: "🧠 Mind map" });
 		const statusEl = container.createEl("p", { text: "Loading file..." });
 
 		// Try to get file path from multiple sources
@@ -613,7 +606,7 @@ class MindMapView extends ItemView {
 
 			// Show debug info
 			const debugInfo = container.createEl("div", { cls: "mind-map-debug" });
-			debugInfo.createEl("strong", { text: "Debug Info:" });
+			debugInfo.createEl("strong", { text: "Debug info:" });
 			debugInfo.createEl("br");
 			debugInfo.createSpan({ text: `Instance filePath: ${this.filePath}` });
 			debugInfo.createEl("br");
@@ -820,6 +813,7 @@ class MindMapSettingTab extends PluginSettingTab {
 	hide(): void {
 		// Clean up event listener when settings tab is hidden
 		if (this.testButton && this.testButtonHandler) {
+			// eslint-disable-next-line @typescript-eslint/no-misused-promises
 			this.testButton.removeEventListener('click', this.testButtonHandler);
 			this.testButton = null;
 			this.testButtonHandler = null;
@@ -831,6 +825,7 @@ class MindMapSettingTab extends PluginSettingTab {
 
 		// Clean up previous event listener
 		if (this.testButton && this.testButtonHandler) {
+			// eslint-disable-next-line @typescript-eslint/no-misused-promises
 			this.testButton.removeEventListener('click', this.testButtonHandler);
 			this.testButton = null;
 			this.testButtonHandler = null;
@@ -838,32 +833,34 @@ class MindMapSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		new Setting(containerEl).setName('Settings for openMindMap Plugin').setHeading();
+		new Setting(containerEl).setName('Main').setHeading();
 
 		// ====================
 		// Device Type Settings
 		// ====================
-		new Setting(containerEl).setName('Device settings').setHeading();
+		new Setting(containerEl).setName('Device').setHeading();
 
 		new Setting(containerEl)
 			.setName('Device type')
-			.setDesc('Choose how mind maps should be rendered. Auto-detects based on your device.')
+			.setDesc('Choose how content should be rendered. Auto-detects based on your device.')
 			.addDropdown(dropdown => dropdown
 				.addOption('auto', 'Auto-detect')
 				.addOption('desktop', 'Desktop mode')
 				.addOption('mobile', 'Mobile mode')
 				.setValue(this.plugin.settings.deviceType)
-				.onChange(async (value: 'auto' | 'mobile' | 'desktop') => {
-					this.plugin.settings.deviceType = value;
-					await this.plugin.saveSettings();
-					// Show notice about reloading
-					new Notice(this.plugin.messages.notices.deviceTypeChanged);
+				.onChange((value: 'auto' | 'mobile' | 'desktop') => {
+					void (async () => {
+						this.plugin.settings.deviceType = value;
+						await this.plugin.saveSettings();
+						// Show notice about reloading
+						new Notice(this.plugin.messages.notices.deviceTypeChanged);
+					})();
 				}));
 
 		// ====================
 		// Language Settings
 		// ====================
-		new Setting(containerEl).setName('Language settings').setHeading();
+		new Setting(containerEl).setName('Language').setHeading();
 
 		new Setting(containerEl)
 			.setName('Language')
@@ -872,35 +869,38 @@ class MindMapSettingTab extends PluginSettingTab {
 				.addOption('en', 'English')
 				.addOption('zh', '中文')
 				.setValue(this.plugin.settings.language || 'en')
-				.onChange(async (value: 'en' | 'zh') => {
-					this.plugin.settings.language = value;
-					await this.plugin.saveSettings();
+				.onChange((value: 'en' | 'zh') => {
+					void (async () => {
+						this.plugin.settings.language = value;
+						await this.plugin.saveSettings();
 
-					// Update config and service layer with new language
-					this.plugin.configManager.updateLanguage(value);
-					this.plugin.config.language = value;
-					this.plugin.mindMapService.updateLanguage(value);
+						// Update config and service layer with new language
+						this.plugin.configManager.updateLanguage(value);
+						this.plugin.config.language = value;
+						this.plugin.mindMapService.updateLanguage(value);
 
-					// Reload the settings page to apply language change
-					this.display();
+						// Reload the settings page to apply language change
+						this.display();
 
-					// Create new i18n manager with the new language to show notice in the correct language
-					const newI18nManager = createI18nManager(value);
-					const newMessages = newI18nManager.getMessages();
+						// Create new i18n manager with the new language to show notice in the correct language
+						const newI18nManager = createI18nManager(value);
+						const newMessages = newI18nManager.getMessages();
 
-					// Show language change notice in the NEW language
-					const languageName = value === 'en' ? 'English' : '中文';
-					const message = newMessages.format(
-						newMessages.notices.languageChanged,
-						{ language: languageName }
-					);
-					new Notice(message);
+						// Show language change notice in the NEW language
+						const languageName = value === 'en' ? 'English' : '中文';
+						const message = newMessages.format(
+							newMessages.notices.languageChanged,
+							{ language: languageName }
+						);
+						new Notice(message);
+					})();
 				}));
 
 		// ====================
 		// AI Configuration
 		// ====================
-		new Setting(containerEl).setName('AI Configuration (OpenAI-compatible API)').setHeading();
+		// eslint-disable-next-line obsidianmd/ui/sentence-case
+		new Setting(containerEl).setName('AI configuration (OpenAI-compatible API)').setHeading();
 		containerEl.createEl('p', {
 			text: 'Configure your AI API to enable intelligent features like automatic node suggestions.',
 			cls: 'setting-item-description'
@@ -908,8 +908,10 @@ class MindMapSettingTab extends PluginSettingTab {
 
 		// Security notice
 		const securityNotice = containerEl.createDiv({ cls: 'setting-item-security-notice' });
+		// eslint-disable-next-line obsidianmd/ui/sentence-case
 		securityNotice.createEl('strong', { text: '🔒 Security:' });
 		securityNotice.appendText(' Your API key is encrypted using AES-GCM (256-bit) before storage. ');
+		// eslint-disable-next-line obsidianmd/ui/sentence-case
 		const codeEl = securityNotice.createEl('code', { text: 'data.json' });
 		securityNotice.appendText(' The encrypted key is stored in ');
 		securityNotice.appendChild(codeEl.cloneNode(true));
@@ -917,33 +919,38 @@ class MindMapSettingTab extends PluginSettingTab {
 
 		// API Base URL
 		new Setting(containerEl)
-			.setName('OpenAI API Base URL')
+			.setName('OpenAI API base URL') // eslint-disable-line obsidianmd/ui/sentence-case
 			.setDesc('The base URL for your OpenAI-compatible API (e.g., https://api.openai.com/v1)')
 			.addText(text => text
 				.setPlaceholder('https://api.openai.com/v1')
 				.setValue(this.plugin.settings.openaiApiBaseUrl)
-				.onChange(async (value) => {
-					this.plugin.settings.openaiApiBaseUrl = value;
-					await this.plugin.saveSettings();
+				.onChange((value) => {
+					void (async () => {
+						this.plugin.settings.openaiApiBaseUrl = value;
+						await this.plugin.saveSettings();
+					})();
 				}));
 
 		// API Key
 		new Setting(containerEl)
-			.setName('OpenAI API Key')
-			.setDesc('Your OpenAI API key (starts with sk-...)')
+			.setName('OpenAI API key') // eslint-disable-line obsidianmd/ui/sentence-case
+			.setDesc('Your OpenAI API key (starts with sk-...)') // eslint-disable-line obsidianmd/ui/sentence-case
 			.addText(text => {
+				// eslint-disable-next-line obsidianmd/ui/sentence-case
 				text.setPlaceholder('sk-...');
 				text.setValue(this.plugin.settings.openaiApiKey);
 				text.inputEl.type = 'password'; // Set input type to password
-				text.onChange(async (value: string) => {
-					this.plugin.settings.openaiApiKey = value;
-					await this.plugin.saveSettings();
-					// Update AI client with new key
-					this.plugin.aiClient.updateConfig({
-						apiBaseUrl: this.plugin.settings.openaiApiBaseUrl,
-						apiKey: value,
-						model: this.plugin.settings.openaiModel
-					});
+				text.onChange((value: string) => {
+					void (async () => {
+						this.plugin.settings.openaiApiKey = value;
+						await this.plugin.saveSettings();
+						// Update AI client with new key
+						this.plugin.aiClient.updateConfig({
+							apiBaseUrl: this.plugin.settings.openaiApiBaseUrl,
+							apiKey: value,
+							model: this.plugin.settings.openaiModel
+						});
+					})();
 				});
 			});
 
@@ -952,17 +959,19 @@ class MindMapSettingTab extends PluginSettingTab {
 			.setName('Model name')
 			.setDesc('The model name to use (e.g., gpt-3.5-turbo, gpt-4, llama2, mistral, etc.)')
 			.addText(text => text
-				.setPlaceholder('gpt-3.5-turbo')
+				.setPlaceholder('gpt-3.5-turbo') // eslint-disable-line obsidianmd/ui/sentence-case
 				.setValue(this.plugin.settings.openaiModel)
-				.onChange(async (value: string) => {
-					this.plugin.settings.openaiModel = value;
-					await this.plugin.saveSettings();
-					// Update AI client with new model
-					this.plugin.aiClient.updateConfig({
-						apiBaseUrl: this.plugin.settings.openaiApiBaseUrl,
-						apiKey: this.plugin.settings.openaiApiKey,
-						model: value
-					});
+				.onChange((value: string) => {
+					void (async () => {
+						this.plugin.settings.openaiModel = value;
+						await this.plugin.saveSettings();
+						// Update AI client with new model
+						this.plugin.aiClient.updateConfig({
+							apiBaseUrl: this.plugin.settings.openaiApiBaseUrl,
+							apiKey: this.plugin.settings.openaiApiKey,
+							model: value
+						});
+					})();
 				}));
 
 		// Test Connection Button
@@ -990,8 +999,8 @@ class MindMapSettingTab extends PluginSettingTab {
 			}
 
 			// Update button state
-			this.testButton!.textContent = 'Testing...';
-			this.testButton!.disabled = true;
+			this.testButton.textContent = 'Testing...';
+			this.testButton.disabled = true;
 
 			try {
 				// Add 10 second timeout
@@ -1038,10 +1047,11 @@ class MindMapSettingTab extends PluginSettingTab {
 			}
 		};
 
+		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		this.testButton.addEventListener('click', this.testButtonHandler);
 
 		// AI Prompts Configuration
-		new Setting(containerEl).setName('AI Prompt Configuration').setHeading();
+		new Setting(containerEl).setName('AI prompt configuration').setHeading();
 		containerEl.createEl('p', {
 			text: 'Customize how the AI generates suggestions by editing the system message and prompt template.',
 			cls: 'setting-item-description'
@@ -1049,27 +1059,31 @@ class MindMapSettingTab extends PluginSettingTab {
 
 		// System Message
 		new Setting(containerEl)
-			.setName('AI System Message')
+			.setName('AI system message')
 			.setDesc('Define the AI assistant role and behavior. This sets the context for all AI interactions.')
 			.addTextArea(text => {
 				text.setPlaceholder('You are a helpful mind map assistant...');
 				text.setValue(this.plugin.settings.aiSystemMessage);
-				text.onChange(async (value) => {
-					this.plugin.settings.aiSystemMessage = value;
-					await this.plugin.saveSettings();
+				text.onChange((value) => {
+					void (async () => {
+						this.plugin.settings.aiSystemMessage = value;
+						await this.plugin.saveSettings();
+					})();
 				});
 			});
 
 		// Prompt Template
 		new Setting(containerEl)
-			.setName('AI Prompt Template')
+			.setName('AI prompt template')
 			.setDesc('Customize the prompt template for node suggestions. Available variables: {nodeText}, {level}, {parentContext}, {siblingsContext}, {existingChildren}, {centralTopic}')
 			.addTextArea(text => {
 				text.setPlaceholder('Please suggest 3-5 child nodes...');
 				text.setValue(this.plugin.settings.aiPromptTemplate);
-				text.onChange(async (value) => {
-					this.plugin.settings.aiPromptTemplate = value;
-					await this.plugin.saveSettings();
+				text.onChange((value) => {
+					void (async () => {
+						this.plugin.settings.aiPromptTemplate = value;
+						await this.plugin.saveSettings();
+					})();
 				});
 			});
 
@@ -1095,10 +1109,10 @@ class MindMapSettingTab extends PluginSettingTab {
 
 		// Reset Prompts Button
 		new Setting(containerEl)
-			.setName('Reset Prompts')
+			.setName('Reset prompts')
 			.setDesc('Reset prompt templates to default values')
 			.addButton(button => button
-				.setButtonText('Reset to Defaults')
+				.setButtonText('Reset to defaults')
 				.setWarning()
 				.onClick(async () => {
 					this.plugin.settings.aiSystemMessage = DEFAULT_SETTINGS.aiSystemMessage;

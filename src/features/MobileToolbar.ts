@@ -339,10 +339,10 @@ export class MobileToolbar {
 				this.callbacks.onEdit?.(node);
 				break;
 			case "copy":
-				this.callbacks.onCopy?.(node);
+				void this.callbacks.onCopy?.(node);
 				break;
 			case "paste":
-				this.callbacks.onPaste?.(node);
+				void this.callbacks.onPaste?.(node);
 				break;
 			case "delete":
 				this.callbacks.onDelete?.(node);

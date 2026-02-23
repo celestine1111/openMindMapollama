@@ -109,7 +109,7 @@ export class MobileInteraction extends DesktopInteraction {
         if ('pointerType' in event) {
             return (
                 event.pointerType === 'touch' ||
-                (event.pointerType === 'pen' && 'pressure' in event && (event as PointerEvent).pressure > 0)
+                (event.pointerType === 'pen' && 'pressure' in event && event.pressure > 0)
             );
         }
         return event.type === 'touchend';

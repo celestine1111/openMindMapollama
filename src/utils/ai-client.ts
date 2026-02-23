@@ -98,20 +98,42 @@ export class AIClient {
 			} else {
 				// Handle error response
 				let errorMessage = `HTTP ${response.status}`;
+				let errorDetails = '';
 
 				try {
 					const errorData = response.json;
 					if (errorData.error?.message) {
 						errorMessage = errorData.error.message;
 					}
+					if (errorData.error?.type) {
+						errorDetails = ` (${errorData.error.type})`;
+					}
 				} catch {
 					// Ignore JSON parse errors when extracting error details
 				}
 
+				// Provide helpful guidance for common errors
+				if (response.status === 401) {
+					return {
+						success: false,
+						message: `❌ Authentication failed (401). Please check:\n` +
+							`1. Your API key is correct and starts with "sk-"\n` +
+							`2. The API key has not expired or been revoked\n` +
+							`3. You're using the correct API base URL for your provider\n\n` +
+							`Error: ${errorMessage}${errorDetails}`
+					};
+				}
+
+				if (response.status === 429) {
+					return {
+						success: false,
+						message: `❌ Rate limit exceeded (429). You've made too many requests. Please wait a moment and try again.`
+					};
+				}
 
 				return {
 					success: false,
-					message: `❌ Error: ${errorMessage}`
+					message: `❌ Error: ${errorMessage}${errorDetails}`
 				};
 			}
 		} catch {
@@ -163,15 +185,38 @@ export class AIClient {
 
 		if (response.status < 200 || response.status >= 300) {
 			let errorMessage = `HTTP ${response.status}`;
+			let errorDetails = '';
+
 			try {
 				const errorData = response.json;
 				if (errorData.error?.message) {
 					errorMessage = errorData.error.message;
 				}
+				if (errorData.error?.type) {
+					errorDetails = ` (${errorData.error.type})`;
+				}
 			} catch {
 				// Ignore JSON parse errors when extracting error details
 			}
-			throw new Error(errorMessage);
+
+			// Provide helpful guidance for common errors
+			if (response.status === 401) {
+				throw new Error(
+					`Authentication failed (401). Please check:\n` +
+					`1. Your API key is correct\n` +
+					`2. The API key has not expired or been revoked\n` +
+					`3. You're using the correct API base URL\n\n` +
+					`Error: ${errorMessage}${errorDetails}`
+				);
+			}
+
+			if (response.status === 429) {
+				throw new Error(
+					`Rate limit exceeded (429). You've made too many requests. Please wait a moment and try again.`
+				);
+			}
+
+			throw new Error(`API request failed: ${errorMessage}${errorDetails}`);
 		}
 
 		const data = response.json;

@@ -12,7 +12,7 @@ function setCssProps(element: HTMLElement, props: Record<string, string>): void 
 /**
  * Node dimension configuration interface
  */
-export interface NodeDimensions {
+interface NodeDimensions {
 	width: number;
 	height: number;
 	textX: number;

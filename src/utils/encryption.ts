@@ -55,8 +55,9 @@ export class EncryptionUtil {
 	 * Get key material from device/plugin identifier
 	 */
 	private static getKeyMaterial(): Uint8Array {
-		// Use provided device info or fallback to browser API
-		const fallbackInfo = `obsidian-mindmap-plugin-${navigator.userAgent}-${navigator.language}`;
+		// Use provided device info or fallback to static identifier
+		// Note: Using deviceInfo is recommended for proper encryption
+		const fallbackInfo = 'obsidian-mindmap-plugin-fallback';
 		const identifier = this.deviceInfo || fallbackInfo;
 		return new TextEncoder().encode(identifier);
 	}

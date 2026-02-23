@@ -34,17 +34,12 @@ export class D3InteractionHandler implements MindMapInteractionHandler {
     private lastClickTime = 0;
     private clickNode: d3.HierarchyNode<MindMapNode> | null = null;
 
-    private messages: MindMapMessages;
-    private config?: MindMapConfig;
-
-     
     constructor(
 		private callbacks: InteractionCallbacks = {},
 		private messages?: MindMapMessages,
 		private config?: MindMapConfig
 	) {
         this.messages = messages || { errors: {}, notices: {}, ui: {}, validation: {} } as MindMapMessages;
-        this.config = config;
     }
 
     /**

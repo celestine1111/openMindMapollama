@@ -1,22 +1,22 @@
 /**
- * Renderer Coordinator - 主渲染协调器
+ * Renderer Coordinator - Main Rendering Coordinator
  *
- * 【职责】
- * - 集成所有功能模块（交互、编辑、AI、剪贴板、按钮、工具栏）
- * - 协调渲染和交互
- * - 实现 MindMapRenderer 接口
- * - 管理生命周期
+ * [Responsibilities]
+ * - Integrate all feature modules (interaction, editing, AI, clipboard, buttons, toolbar)
+ * - Coordinate rendering and interaction
+ * - Implement MindMapRenderer interface
+ * - Manage lifecycle
  *
- * 【设计原则】
- * - 组合优于继承：使用多个专门的模块而非单一巨型类
- * - 单一职责：每个模块负责特定功能
- * - 通过回调实现模块间通信
- * - 保持向后兼容：实现 MindMapRenderer 接口
+ * [Design Principles]
+ * - Composition over inheritance: Use multiple specialized modules instead of a single monolithic class
+ * - Single responsibility: Each module handles specific functionality
+ * - Inter-module communication via callbacks
+ * - Maintain backward compatibility: Implement MindMapRenderer interface
  *
- * 【架构】
- * - 核心渲染：保留必要的 SVG 渲染逻辑
- * - 功能模块：使用 Phase 3 提取的 6 个模块
- * - 事件协调：通过 InteractionManager 统一管理
+ * [Architecture]
+ * - Core rendering: Retain necessary SVG rendering logic
+ * - Feature modules: Use 6 modules extracted from Phase 3
+ * - Event coordination: Unified management through InteractionManager
  */
 
 import * as d3 from 'd3';
@@ -26,14 +26,14 @@ import { MindMapConfig } from '../config/types';
 import { MindMapMessages } from '../i18n';
 import { UndoManager } from '../managers/UndoManager';
 
-// 导入核心渲染器
+// Import core renderers
 import { TextMeasurer } from '../utils/TextMeasurer';
 import { LayoutCalculator } from './layout-calculator';
 import { NodeRenderer } from './core/NodeRenderer';
 import { LinkRenderer } from './core/LinkRenderer';
 import { TextRenderer } from './core/TextRenderer';
 
-// 导入功能模块
+// Import feature modules
 import { InteractionManager, RenderCallbacks } from '../interactions/interaction-manager';
 import { AIAssistant, AIAssistantCallbacks } from '../features/AIAssistant';
 import { NodeEditor, NodeEditorCallbacks } from '../features/NodeEditor';
@@ -42,19 +42,19 @@ import { ButtonRenderer, ButtonRendererCallbacks } from '../features/ButtonRende
 import { MobileToolbar, MobileToolbarCallbacks } from '../features/MobileToolbar';
 
 /**
- * Renderer Coordinator 类
+ * Renderer Coordinator Class
  *
- * 替代 D3TreeRenderer，集成所有功能模块
+ * Replaces D3TreeRenderer, integrates all feature modules
  */
 export class RendererCoordinator implements MindMapRenderer {
-	// ========== 核心渲染组件 ==========
+	// ========== Core Rendering Components ==========
 	private textMeasurer: TextMeasurer;
 	private layoutCalculator: LayoutCalculator;
 	private nodeRenderer: NodeRenderer;
 	private linkRenderer: LinkRenderer;
 	private textRenderer: TextRenderer;
 
-	// ========== 功能模块 ==========
+	// ========== Feature Modules ==========
 	private interactionManager: InteractionManager;
 	private aiAssistant: AIAssistant;
 	private nodeEditor: NodeEditor;
@@ -63,22 +63,22 @@ export class RendererCoordinator implements MindMapRenderer {
 	private mobileToolbar: MobileToolbar;
 	private undoManager: UndoManager;
 
-	// ========== 状态管理 ==========
+	// ========== State Management ==========
 	private currentSvg: d3.Selection<SVGSVGElement, unknown, null, undefined> | null = null;
 	private currentContent: d3.Selection<SVGGElement, unknown, null, undefined> | null = null;
 	private currentZoom: d3.ZoomBehavior<SVGSVGElement, unknown> | null = null;
 	private currentZoomTransform = d3.zoomIdentity;
 	private currentData: MindMapData | null = null;
 
-	// 视图状态
+	// View state
 	private isRendering = false;
 	private pendingRenderRequest = false;
 
-	// 选中状态
+	// Selection state
 	private selectedNode: d3.HierarchyNode<MindMapNode> | null = null;
 	private hoveredNode: d3.HierarchyNode<MindMapNode> | null = null;
 
-	// 编辑状态（共享给所有模块）
+	// Editing state (shared with all modules)
 	private editingState: EditingState = {
 		isEditing: false,
 		currentNode: null,
@@ -86,10 +86,10 @@ export class RendererCoordinator implements MindMapRenderer {
 		editElement: null
 	};
 
-	// 画布交互状态
+	// Canvas interaction state
 	private canvasInteractionEnabled = true;
 
-	// 布局配置系统
+	// Layout configuration system
 	private layoutConfig = {
 		minNodeGap: 25,
 		lineOffset: 6,
@@ -101,13 +101,13 @@ export class RendererCoordinator implements MindMapRenderer {
 		nodeHeightBuffer: 15,
 	};
 
-	// 配置和消息
+	// Configuration and messages
 	private config: MindMapConfig;
 	private messages: MindMapMessages;
 
-	// 回调
+	// Callbacks
 	onDataUpdated?: () => void;
-	onTextChanged?: (node: d3.HierarchyNode<d3.HierarchyNode<MindMapNode>>, newText: string) => void;
+	onTextChanged?: (node: d3.HierarchyNode<MindMapNode>, newText: string) => void;
 	onDataRestored?: (data: MindMapData) => void;
 
 	constructor(
@@ -119,22 +119,22 @@ export class RendererCoordinator implements MindMapRenderer {
 		this.config = config || { isMobile: false } as MindMapConfig;
 		this.messages = messages || {} as MindMapMessages;
 
-		// 添加警告：如果 messages 为空，提示缺少国际化支持
+		// Warning: if messages is empty, indicates missing i18n support
 		if (!messages) {
 			// Messages will use default English fallback
 		}
 
-		// 初始化 UndoManager
+		// Initialize UndoManager
 		this.undoManager = new UndoManager();
 
-		// 初始化核心渲染器
+		// Initialize core renderers
 		this.initializeCoreRenderers();
 
-		// 初始化功能模块
+		// Initialize feature modules
 		this.initializeFeatureModules();
 	}
 
-	// ========== 初始化 ==========
+	// ========== Initialization ==========
 
 	private initializeCoreRenderers(): void {
 		this.textMeasurer = new TextMeasurer();
@@ -145,7 +145,7 @@ export class RendererCoordinator implements MindMapRenderer {
 	}
 
 	private initializeFeatureModules(): void {
-		// 1. 交互管理器（协调其他所有模块）
+		// 1. Interaction Manager (coordinates all other modules)
 		const renderCallbacks: RenderCallbacks = {
 			onNodeSelected: (node) => this.handleNodeSelected(node),
 			onNodeHovered: (node) => this.handleNodeHovered(node),
@@ -174,7 +174,7 @@ export class RendererCoordinator implements MindMapRenderer {
 		// 3. Node Editor
 		const editorCallbacks: NodeEditorCallbacks = {
 			onBeforeTextChange: (node) => {
-				// 保存快照（在修改前）
+				// Save snapshot (before modification)
 				if (this.currentData) {
 					this.undoManager.saveSnapshot(this.currentData);
 				}
@@ -184,7 +184,7 @@ export class RendererCoordinator implements MindMapRenderer {
 			},
 			onCanvasInteractionChanged: (enabled) => {
 				this.canvasInteractionEnabled = enabled;
-				// 同步编辑状态到 InteractionManager
+				// Sync editing state to InteractionManager
 				this.interactionManager.syncEditingState(!enabled);
 			}
 		};
@@ -211,7 +211,7 @@ export class RendererCoordinator implements MindMapRenderer {
 			buttonCallbacks
 		);
 
-		// 6. Mobile Toolbar（仅移动端）
+		// 6. Mobile Toolbar (mobile only)
 		if (this.config.isMobile) {
 			const toolbarCallbacks: MobileToolbarCallbacks = {
 				onEdit: (node) => this.enterEditModeForNode(node),
@@ -231,30 +231,30 @@ export class RendererCoordinator implements MindMapRenderer {
 		}
 	}
 
-	// ========== MindMapRenderer 接口实现 ==========
+	// ========== MindMapRenderer Interface Implementation ==========
 
 	render(container: Element, data: MindMapData): void {
-		// 渲染锁机制
+		// Render lock mechanism
 		if (this.isRendering) {
 			this.pendingRenderRequest = true;
 			return;
 		}
 		this.isRendering = true;
 
-		// 保存当前数据引用（用于 undo/redo）
+		// Save current data reference (for undo/redo)
 		this.currentData = data;
 
-		// 验证选中状态（在创建D3层次结构之前）
+		// Validate selection state (before creating D3 hierarchy)
 		this.validateSelectionState();
 
-		// 在 try 块外声明，以便 finally 块可以访问
+		// Declare outside try block so finally block can access it
 		let root: d3.HierarchyNode<any>;
 
 		try {
-			// 清空容器 - 使用 D3 方法而不是 innerHTML，保留对象引用
+			// Clear container - use D3 method instead of innerHTML, preserve object references
 			d3.select(container).selectAll('*').remove();
 
-			// 创建 SVG
+			// Create SVG
 			const svg = d3.select(container).append('svg')
 				.attr('width', '100%')
 				.attr('height', '100%')
@@ -262,80 +262,80 @@ export class RendererCoordinator implements MindMapRenderer {
 
 			this.currentSvg = svg;
 
-			// 创建内容组
+			// Create content group
 			this.currentContent = svg.append('g')
 				.attr('class', 'mindmap-content');
 
-			// 计算布局 - 创建D3层次结构
+			// Calculate layout - create D3 hierarchy
 			root = d3.hierarchy(data.rootNode);
 
-			// 计算动态树高度
+			// Calculate dynamic tree height
 			const dynamicTreeHeight = this.calculateDynamicTreeHeight(root);
 
-			// 更新 LayoutCalculator 的配置
+			// Update LayoutCalculator configuration
 			this.layoutCalculator.updateConfig({
 				treeHeight: dynamicTreeHeight
 			});
 
-			// 应用自定义树形布局
+			// Apply custom tree layout
 			this.layoutCalculator.createCustomTreeLayout(root, (depth, text) =>
 				this.textMeasurer.getNodeDimensions(depth, text)
 			);
 
-			// 创建 SVG 渐变定义
+			// Create SVG gradient definitions
 			this.createGradientDefinitions(svg);
 
-			// 设置缩放 - 在渲染节点之前设置（参照重构前的实现）
+			// Setup zoom - set before rendering nodes (reference pre-refactor implementation)
 			this.setupZoom(svg, container);
 
-			// 立即应用已保存的 zoom 状态（防止视觉跳跃）
+			// Immediately apply saved zoom state (prevent visual jump)
 			if (this.currentZoomTransform) {
-				svg.call(this.currentZoom.transform, this.currentZoomTransform);
+				svg.call((selection) => this.currentZoom.transform(selection, this.currentZoomTransform));
 				this.currentContent.attr("transform", this.currentZoomTransform as any);
 			}
 
-			// 偏移量（居中偏移，暂时使用0）
+			// Offset (center offset, temporarily using 0)
 			const offsetX = 0;
 			const offsetY = 0;
 
-			// 渲染连线
+			// Render links
 			this.renderLinks(root, offsetX, offsetY);
 
-			// 渲染节点
+			// Render nodes
 			this.renderNodes(root, offsetX, offsetY);
 
-			// 恢复视图状态
+			// Restore view state
 			this.restoreViewState();
 
-			// 应用初始视图位置
+			// Apply initial view position
 			this.applyInitialViewPosition(root, svg, this.currentZoom, container);
 
 		} finally {
 			this.isRendering = false;
 
-			// 处理待处理的渲染请求
+			// Handle pending render request
 			if (this.pendingRenderRequest) {
 				this.pendingRenderRequest = false;
 				setTimeout(() => {
 					this.render(container, data);
-				}, 16); // 约一帧的时间
+				}, 16); // Approximately one frame
 			}
 
-			// 同步节点引用
+			// Sync node references
 			this.syncSelectedNodeReference(root);
 
-			// 🔧 移动端：重新创建工具栏（确保工具栏始终存在且唯一）
+			// Mobile: recreate toolbar (ensure toolbar always exists and is unique)
 			if (this.config.isMobile && this.mobileToolbar) {
 				this.mobileToolbar.create(this.currentSvg);
 			}
 
-			// 恢复 UI 状态（如果有选中节点，会显示工具栏）
+			// Restore UI state (if there's a selected node, show toolbar)
 			this.restoreSelectionUI();
 		}
 	}
 
 	destroy(): void {
-		// 销毁所有模块
+		// Destroy all modules
 		this.mobileToolbar?.destroy();
 		this.buttonRenderer.destroy();
 		this.clipboardManager.destroy();
@@ -343,7 +343,7 @@ export class RendererCoordinator implements MindMapRenderer {
 		this.aiAssistant.destroy();
 		this.interactionManager.destroy();
 
-		// 清理 SVG
+		// Clean up SVG
 		if (this.currentSvg) {
 			this.currentSvg.selectAll('*').remove();
 			this.currentSvg = null;
@@ -351,11 +351,11 @@ export class RendererCoordinator implements MindMapRenderer {
 		this.currentContent = null;
 	}
 
-	// ========== 公共方法（兼容性接口）==========
+	// ========== Public Methods (Compatibility Interface) ==========
 
 	/**
-	 * 保存当前视图状态
-	 * 注意：此方法保留用于兼容性，实际上视图状态在 render() 中自动保存
+	 * Save current view state
+	 * Note: This method is kept for compatibility, view state is actually saved automatically in render()
 	 */
 	public saveViewState(): void {
 		// View state is automatically saved internally during render()
@@ -369,8 +369,8 @@ export class RendererCoordinator implements MindMapRenderer {
 	}
 
 	/**
-	 * 退出编辑模式
-	 * 注意：此方法保留用于兼容性，实际上编辑状态由 NodeEditor 管理
+	 * Exit edit mode
+	 * Note: This method is kept for compatibility, edit state is actually managed by NodeEditor
 	 */
 	public exitEditMode(): void {
 		// Edit state is automatically managed by NodeEditor
@@ -381,9 +381,9 @@ export class RendererCoordinator implements MindMapRenderer {
 	}
 
 	/**
-	 * 保存节点文本
-	 * 供 TextRenderer 的键盘事件处理器调用
-	 * 在编辑模式下按 Enter 键时触发
+	 * Save node text
+	 * Called by TextRenderer's keyboard event handler
+	 * Triggered when pressing Enter in edit mode
 	 */
 	public saveNodeText(): void {
 		if (this.nodeEditor.isEditing()) {
@@ -393,9 +393,9 @@ export class RendererCoordinator implements MindMapRenderer {
 	}
 
 	/**
-	 * 取消编辑模式
-	 * 供 TextRenderer 的键盘事件处理器调用
-	 * 在编辑模式下按 Escape 键时触发
+	 * Cancel edit mode
+	 * Called by TextRenderer's keyboard event handler
+	 * Triggered when pressing Escape in edit mode
 	 */
 	public cancelEditMode(): void {
 		if (this.nodeEditor.isEditing()) {
@@ -403,21 +403,21 @@ export class RendererCoordinator implements MindMapRenderer {
 		}
 	}
 
-	// ========== 私有渲染方法 ==========
+	// ========== Private Rendering Methods ==========
 
 	private renderLinks(root: d3.HierarchyNode<any>, offsetX: number, offsetY: number): void {
-		// 使用 LinkRenderer 渲染连线
+		// Use LinkRenderer to render links
 		this.linkRenderer.renderLinks(this.currentContent, root.links(), offsetX, offsetY);
 	}
 
 	private renderNodes(root: d3.HierarchyNode<MindMapNode>, offsetX: number, offsetY: number): void {
-		// 使用 NodeRenderer 渲染节点矩形
+		// Use NodeRenderer to render node rectangles
 		const nodeElements = this.nodeRenderer.renderNodes(this.currentContent, root.descendants(), offsetX, offsetY);
 
-		// 使用 TextRenderer 渲染文本（批量处理所有节点）
+		// Use TextRenderer to render text (batch process all nodes)
 		this.textRenderer.renderText(nodeElements, undefined, this as unknown as { config?: MindMapConfig; editingState?: EditingState });
 
-		// 附加交互处理器
+		// Attach interaction handlers
 		this.attachInteractionHandlers(nodeElements as d3.Selection<SVGGElement, d3.HierarchyNode<MindMapNode>, null, undefined>);
 	}
 
@@ -425,18 +425,18 @@ export class RendererCoordinator implements MindMapRenderer {
 		this.currentZoom = d3.zoom<SVGSVGElement, unknown>()
 			.scaleExtent([0.1, 4])
 			.filter((event: Event) => {
-				// 检查画布交互是否启用（编辑模式下为 false）
+				// Check if canvas interaction is enabled (false in edit mode)
 				if (!this.canvasInteractionEnabled) {
 					return false;
 				}
 
-				// 检查事件目标是否为可编辑元素
+				// Check if event target is an editable element
 				const target = event.target as HTMLElement;
 				if (target.contentEditable === "true" || target.closest('[contenteditable="true"]')) {
 					return false;
 				}
 
-				return true; // 允许正常的缩放行为
+				return true; // Allow normal zoom behavior
 			})
 			.on('zoom', (event) => {
 				this.handleZoom(event);
@@ -444,7 +444,7 @@ export class RendererCoordinator implements MindMapRenderer {
 
 		svg.call(this.currentZoom);
 
-		// 移除 D3 zoom 的双击缩放监听器（防止双击节点时触发缩放）
+		// Remove D3 zoom double-click listener (prevent zoom when double-clicking nodes)
 		svg.on("dblclick.zoom", null);
 	}
 
@@ -454,13 +454,13 @@ export class RendererCoordinator implements MindMapRenderer {
 		zoom: d3.ZoomBehavior<any, unknown>,
 		container: Element
 	): void {
-		// 🔑 关键修复：只在首次渲染时应用初始位置
-		// 如果已经有保存的 zoomTransform，说明不是首次渲染，不应该重新应用初始位置
+		// Key fix: Only apply initial position on first render
+		// If zoomTransform is already saved, this is not first render, should not reapply initial position
 		if (this.currentZoomTransform) {
 			return;
 		}
 
-		// 简化版初始位置（可以后续优化）
+		// Simplified initial position (can be optimized later)
 		requestAnimationFrame(() => {
 			const containerHeight = container.clientHeight || 1000;
 
@@ -468,45 +468,45 @@ export class RendererCoordinator implements MindMapRenderer {
 				.translate(20, (containerHeight - 100) / 2)
 				.scale(1);
 
-			svg.call(zoom.transform, initialTransform);
+			svg.call((selection) => zoom.transform(selection, initialTransform));
 		});
 	}
 
 	private attachInteractionHandlers(
 		nodeElements: d3.Selection<SVGGElement, d3.HierarchyNode<MindMapNode>, null, undefined>
 	): void {
-		// 使用 InteractionManager 附加处理器
+		// Use InteractionManager to attach handlers
 		this.interactionManager.attachHandlers(this.currentSvg, nodeElements);
 
-		// 移动端：创建工具栏
+		// Mobile: create toolbar
 		if (this.config.isMobile && this.mobileToolbar) {
 			this.mobileToolbar.create(this.currentSvg);
 		}
 	}
 
-	// ========== 事件处理 ==========
+	// ========== Event Handling ==========
 
 	private handleZoom(event: any): void {
-		// 更新内容组变换
+		// Update content group transform
 		if (this.currentContent) {
 			this.currentContent.attr('transform', event.transform);
 		}
 		this.currentZoomTransform = event.transform;
 	}
 
-	// ========== RenderCallbacks 实现 ==========
+	// ========== RenderCallbacks Implementation ==========
 
 	private handleNodeSelected(node: d3.HierarchyNode<any>): void {
 		this.selectedNode = node;
 
-		// 渲染按钮
+		// Render buttons
 		const nodeElement = d3.selectAll('.nodes g').filter((d: any) => d === node);
 		const dimensions = this.textMeasurer.getNodeDimensions(node.depth, node.data.text);
 
 		this.buttonRenderer.renderPlusButton(nodeElement as any, node, dimensions);
 		this.aiAssistant.renderAIButton(nodeElement as any, node, dimensions);
 
-		// 移动端：显示工具栏
+		// Mobile: show toolbar
 		if (this.config.isMobile && this.mobileToolbar && !this.nodeEditor.isEditing()) {
 			this.mobileToolbar.updatePosition(node, 0, 0);
 		}
@@ -525,14 +525,14 @@ export class RendererCoordinator implements MindMapRenderer {
 	private handleSelectionCleared(): void {
 		this.selectedNode = null;
 
-		// 移动端：隐藏工具栏
+		// Mobile: hide toolbar
 		if (this.config.isMobile && this.mobileToolbar) {
 			this.mobileToolbar.hide();
 		}
 	}
 
 	private handleNodeDoubleClicked(node: d3.HierarchyNode<any>, event: MouseEvent): void {
-		// 委托给 NodeEditor 处理
+		// Delegate to NodeEditor
 		const targetElement = d3.selectAll('.nodes g')
 			.filter((d: any) => d === node)
 			.select('.node-unified-text')
@@ -544,46 +544,38 @@ export class RendererCoordinator implements MindMapRenderer {
 	}
 
 	private handleAddChildNode(node: d3.HierarchyNode<any>): void {
-		// 保存快照（在修改前）
+		// Save snapshot (before modification)
 		if (this.currentData) {
 			this.undoManager.saveSnapshot(this.currentData);
 		}
 
-		// 创建新的子节点
+		// Create new child node
 		const newNode = this.mindMapService.createChildNode(node.data, 'New Node');
 
-		// 清除所有选中状态
+		// Clear all selection states
 		this.clearSelection();
 
-		// 直接在数据层设置选中状态（不调用selectNode()）
+		// Set selected state directly in data layer
+		// Note: Don't set selectedNode here, as it becomes stale after re-render
+		// selectedNode will be properly updated in syncSelectedNodeReference() during render()
 		newNode.selected = true;
-
-		// 更新内部引用
-		this.selectedNode = {
-			data: newNode,
-			depth: newNode.level,
-			parent: node,
-			children: []
-		} as d3.HierarchyNode<any>;
 
 		this.triggerDataUpdate();
 
-		// 自动进入编辑模式
+		// Auto enter edit mode
+		// Delayed execution to ensure DOM has updated
 		setTimeout(() => {
 			this.editNewNode();
 		}, 150);
 	}
 
 	private handleAddSiblingNode(node: d3.HierarchyNode<any>): void {
-		// 保存快照（在修改前）
+		// Save snapshot (before modification)
 		if (this.currentData) {
 			this.undoManager.saveSnapshot(this.currentData);
 		}
 
-		// 1. 保存父节点引用（在清除选中状态之前）
-		const parentNode = node.parent;
-
-		// 2. 创建新的兄弟节点
+		// Create new sibling node
 		const newNode = this.mindMapService.createSiblingNode(
 			node.data,
 			"New Node"
@@ -591,29 +583,25 @@ export class RendererCoordinator implements MindMapRenderer {
 
 		if (!newNode) return;
 
-		// 3. 清除所有选中状态
+		// Clear all selection states
 		this.clearSelection();
 
-		// 4. 选中新创建的兄弟节点
+		// Select newly created sibling node in data layer
+		// Note: Don't set selectedNode here, as it becomes stale after re-render
+		// selectedNode will be properly updated in syncSelectedNodeReference() during render()
 		newNode.selected = true;
-		this.selectedNode = {
-			data: newNode,
-			depth: newNode.level,
-			parent: parentNode,
-			children: []
-		} as d3.HierarchyNode<any>;
 
-		// 5. 触发数据更新和重新渲染
+		// Trigger data update and re-render
 		this.triggerDataUpdate();
 
-		// 6. 自动进入编辑模式
+		// Auto enter edit mode
 		setTimeout(() => {
 			this.editNewNode();
 		}, 150);
 	}
 
 	private handleDeleteNode(node: d3.HierarchyNode<any>): void {
-		// 保存快照（在修改前）
+		// Save snapshot (before modification)
 		if (this.currentData) {
 			this.undoManager.saveSnapshot(this.currentData);
 		}
@@ -630,7 +618,7 @@ export class RendererCoordinator implements MindMapRenderer {
 	}
 
 	private async handleCutNode(node: d3.HierarchyNode<any>): Promise<void> {
-		// 保存快照（在修改前）
+		// Save snapshot (before modification)
 		if (this.currentData) {
 			this.undoManager.saveSnapshot(this.currentData);
 		}
@@ -639,7 +627,7 @@ export class RendererCoordinator implements MindMapRenderer {
 	}
 
 	private async handlePasteToNode(node: d3.HierarchyNode<any>): Promise<void> {
-		// 保存快照（在修改前）
+		// Save snapshot (before modification)
 		if (this.currentData) {
 			this.undoManager.saveSnapshot(this.currentData);
 		}
@@ -648,22 +636,22 @@ export class RendererCoordinator implements MindMapRenderer {
 	}
 
 	/**
-	 * 处理退出编辑模式
-	 * 由 InteractionManager 在点击空白处时触发
+	 * Handle exit edit mode
+	 * Triggered by InteractionManager when clicking empty space
 	 */
 	private handleExitEditMode(): void {
 		if (this.nodeEditor.isEditing()) {
-			// NodeEditor.saveText() 会：
-			// 1. 验证文本
-			// 2. 更新 node.data.text
-			// 3. 触发 onTextChanged 回调（保存文件）
-			// 4. 调用 exitEditMode() 清理UI
-			// 5. 触发 onCanvasInteractionChanged(true) 回调
+			// NodeEditor.saveText() will:
+			// 1. Validate text
+			// 2. Update node.data.text
+			// 3. Trigger onTextChanged callback (save file)
+			// 4. Call exitEditMode() to clean up UI
+			// 5. Trigger onCanvasInteractionChanged(true) callback
 			this.nodeEditor.saveText();
 		}
 	}
 
-	// ========== 辅助方法 ==========
+	// ========== Helper Methods ==========
 
 	private enterEditModeForNode(node: d3.HierarchyNode<any>): void {
 		const targetElement = d3.selectAll('.nodes g')
@@ -677,50 +665,50 @@ export class RendererCoordinator implements MindMapRenderer {
 	}
 
 	private selectNode(node: d3.HierarchyNode<any>): void {
-		// 设置选中状态
+		// Set selection state
 		this.selectedNode = node;
 		node.data.selected = true;
 
-		// 添加选中视觉效果
+		// Add visual selection effect
 		d3.selectAll('.node-rect')
 			.filter((d: any) => d === node)
 			.classed('selected-rect', true);
 	}
 
 	private clearSelection(): void {
-		// 如果正在编辑，先保存编辑内容
+		// If editing, save edit content first
 		if (this.nodeEditor.isEditing()) {
 			this.nodeEditor.saveText();
 			return;
 		}
 
-		// 递归清除所有数据层选中状态
+		// Recursively clear all data layer selection states
 		if (this.currentData && this.currentData.rootNode) {
 			this.clearAllSelectionStates(this.currentData.rootNode);
 		}
 
-		// 移除所有视觉效果
+		// Remove all visual effects
 		d3.selectAll('.node-rect')
 			.classed('selected-rect', false)
 			.classed('hovered-rect', false);
 
-		// 清除内部状态
+		// Clear internal state
 		this.selectedNode = null;
 		this.hoveredNode = null;
 
-		// 移除所有按钮
+		// Remove all buttons
 		d3.selectAll('.plus-button-group').remove();
 		d3.selectAll('.ai-suggest-button-group').remove();
 
-		// 移动端：隐藏工具栏
+		// Mobile: hide toolbar
 		if (this.config.isMobile && this.mobileToolbar) {
 			this.mobileToolbar.hide();
 		}
 	}
 
 	/**
-	 * 递归清除所有节点选中状态
-	 * 确保数据层选中状态被完全清除
+	 * Recursively clear all node selection states
+	 * Ensure data layer selection states are completely cleared
 	 */
 	private clearAllSelectionStates(node: MindMapNode): void {
 		node.selected = false;
@@ -732,8 +720,8 @@ export class RendererCoordinator implements MindMapRenderer {
 	}
 
 	/**
-	 * 验证选中状态
-	 * 检查并修复多个节点被选中的异常情况
+	 * Validate selection state
+	 * Check and fix abnormal situation where multiple nodes are selected
 	 */
 	private validateSelectionState(): void {
 		if (!this.currentData || !this.currentData.rootNode) {
@@ -743,7 +731,7 @@ export class RendererCoordinator implements MindMapRenderer {
 		let selectedCount = 0;
 		let firstSelected: MindMapNode | null = null;
 
-		// 统计选中节点
+		// Count selected nodes
 		this.currentData.allNodes.forEach(node => {
 			if (node.selected) {
 				selectedCount++;
@@ -753,7 +741,7 @@ export class RendererCoordinator implements MindMapRenderer {
 			}
 		});
 
-		// 如果发现多个节点被选中，只保留第一个
+		// If multiple nodes are selected, only keep the first one
 		if (selectedCount > 1) {
 			console.warn(`[Selection] Found ${selectedCount} selected nodes, clearing all except first`);
 
@@ -765,17 +753,17 @@ export class RendererCoordinator implements MindMapRenderer {
 		}
 	}
 
-	// ========== 布局计算方法 ==========
+	// ========== Layout Calculation Methods ==========
 
 	/**
-	 * 计算动态树高度
-	 * 基于节点数量和深度计算所需的树高度，避免节点重叠
+	 * Calculate dynamic tree height
+	 * Calculate required tree height based on node count and depth, avoid node overlap
 	 */
 	private calculateDynamicTreeHeight(root: d3.HierarchyNode<any>): number {
 		let maxDepth = 0;
 		const nodesAtDepth: Record<number, d3.HierarchyNode<any>[]> = {};
 
-		// 统计每层的节点和最大深度
+		// Count nodes and max depth at each level
 		root.each(node => {
 			maxDepth = Math.max(maxDepth, node.depth);
 			if (!nodesAtDepth[node.depth]) {
@@ -784,53 +772,53 @@ export class RendererCoordinator implements MindMapRenderer {
 			nodesAtDepth[node.depth].push(node);
 		});
 
-		// 计算每层所需的高度，使用优化的紧凑布局
+		// Calculate required height for each level, use optimized compact layout
 		let totalHeight = 0;
 		for (let depth = 0; depth <= maxDepth; depth++) {
 			const nodes = nodesAtDepth[depth] || [];
 			const layerHeight = this.calculateAdaptiveLayerHeight(nodes);
 
-			// 精细化深度间距调整（同步修复第三层和第四层重叠）
+			// Fine-tuned depth spacing adjustment (fix layer 3 and 4 overlap)
 			let depthMultiplier = 1.0;
 			if (depth === 0) {
-				depthMultiplier = 0.8; // 根节点：更紧凑
+				depthMultiplier = 0.8; // Root node: more compact
 			} else if (depth === 1) {
-				depthMultiplier = 1.0; // 第1层：标准间距
+				depthMultiplier = 1.0; // Level 1: standard spacing
 			} else if (depth === 2) {
-				depthMultiplier = 1.3; // 第2层：适度增加
+				depthMultiplier = 1.3; // Level 2: moderate increase
 			} else if (depth === 3) {
-				depthMultiplier = 1.8; // 第3层：显著增加
+				depthMultiplier = 1.8; // Level 3: significant increase
 			} else {
-				depthMultiplier = 2.2 + (depth - 4) * 0.3; // 第4层+：大幅增加
+				depthMultiplier = 2.2 + (depth - 4) * 0.3; // Level 4+: large increase
 			}
 
 			const verticalSpacing = this.layoutConfig.verticalSpacing * depthMultiplier;
 
-			// 基于节点数量的智能调整（更保守的增长）
+			// Intelligent adjustment based on node count (more conservative growth)
 			const nodeCount = nodes.length;
 			if (nodeCount > 3) {
-				const nodeCountMultiplier = 1 + (nodeCount - 3) * 0.1; // 每多一个节点增加10%
+				const nodeCountMultiplier = 1 + (nodeCount - 3) * 0.1; // Add 10% for each additional node
 				totalHeight += layerHeight + (verticalSpacing * nodeCountMultiplier);
 			} else {
 				totalHeight += layerHeight + verticalSpacing;
 			}
 		}
 
-		// 确保不小于原高度，并添加适当的缓冲空间
+		// Ensure not less than original height, add appropriate buffer
 		const minHeight = Math.max(totalHeight, this.layoutConfig.treeHeight);
-		const depthBuffer = Math.max(100, maxDepth * 25); // 使用紧凑的缓冲
+		const depthBuffer = Math.max(100, maxDepth * 25); // Use compact buffer
 
 		return minHeight + depthBuffer;
 	}
 
 	/**
-	 * 计算自适应层高
-	 * 计算单层节点所需的高度
+	 * Calculate adaptive layer height
+	 * Calculate required height for a single layer of nodes
 	 */
 	private calculateAdaptiveLayerHeight(nodes: d3.HierarchyNode<any>[]): number {
 		if (nodes.length === 0) return 60;
 
-		// 计算该层所有节点的最大高度
+		// Calculate max height of all nodes at this layer
 		let maxHeight = 0;
 		let totalTextLength = 0;
 
@@ -840,26 +828,26 @@ export class RendererCoordinator implements MindMapRenderer {
 			totalTextLength += node.data.text.length;
 		});
 
-		// 基于节点高度和文本长度计算层高
-		const textLengthBonus = Math.min(totalTextLength / nodes.length * 2, 50); // 每个字符2px，最多50px奖励
+		// Calculate layer height based on node height and text length
+		const textLengthBonus = Math.min(totalTextLength / nodes.length * 2, 50); // 2px per character, max 50px bonus
 		const adaptiveHeight = maxHeight + textLengthBonus;
 
-		// 确保最小高度
+		// Ensure minimum height
 		const minHeight = nodes[0].depth === 0 ? 80 : nodes[0].depth === 1 ? 70 : 60;
 
 		return Math.max(adaptiveHeight, minHeight);
 	}
 
-	// ========== 状态管理方法 ==========
+	// ========== State Management Methods ==========
 
 	/**
-	 * 创建 SVG 渐变定义
-	 * 为连线提供视觉层次感的渐变色效果
+	 * Create SVG gradient definitions
+	 * Provide gradient color effects for links with visual depth
 	 */
 	private createGradientDefinitions(svg: d3.Selection<SVGSVGElement, unknown, null, undefined>): void {
 		const defs = svg.append("defs");
 
-		// 创建主要连线渐变
+		// Create main link gradient
 		const linkGradient = defs.append("linearGradient")
 			.attr("id", "linkGradient")
 			.attr("x1", "0%")
@@ -884,50 +872,63 @@ export class RendererCoordinator implements MindMapRenderer {
 	}
 
 	/**
-	 * 同步选中节点引用
-	 * 重新渲染后，将 selectedNode 引用更新到新的 D3 层级结构
+	 * Sync selected node reference
+	 * After re-render, update selectedNode reference to new D3 hierarchy
 	 */
 	private syncSelectedNodeReference(root: d3.HierarchyNode<any>): void {
-		// 如果当前没有选中的节点，直接返回
-		if (!this.selectedNode || !this.selectedNode.data) {
+		let targetNode: MindMapNode | null = null;
+		let foundNode: d3.HierarchyNode<any> | null = null;
+
+		// Strategy 1: If there's currently a selected node, try to sync its reference
+		if (this.selectedNode && this.selectedNode.data) {
+			targetNode = this.selectedNode.data;
+		} else {
+			// Strategy 2: If no selected node reference, find selected node from data layer
+			// This handles the case after adding a new node (selectedNode is null, but new node's data.selected is true)
+			root.each((d) => {
+				if (d.data.selected && !targetNode) {
+					targetNode = d.data;
+				}
+			});
+		}
+
+		// If no target node found, clear selection state
+		if (!targetNode) {
+			this.selectedNode = null;
 			return;
 		}
 
-		// 遍历新的D3层级结构，找到匹配的节点
-		const targetNode = this.selectedNode.data;
-		let foundNode: d3.HierarchyNode<any> | null = null;
-
-		// 使用深度优先搜索找到具有相同数据引用的节点
+		// Use depth-first search to find node with same data reference
 		root.each((d) => {
 			if (d.data === targetNode) {
 				foundNode = d;
 			}
 		});
 
-		// 如果找到了匹配的节点，更新selectedNode引用
+		// If matching node found, update selectedNode reference
 		if (foundNode) {
 			this.selectedNode = foundNode;
 		} else {
-			// 如果没找到（节点可能被删除），清除选中状态
+			// If not found (node may have been deleted), clear selection state
 			this.selectedNode = null;
 		}
 	}
 
 	/**
-	 * 恢复选中 UI
-	 * 重新渲染后，为选中节点恢复按钮
+	 * Restore selection UI
+	 * After re-render, restore buttons for selected nodes
 	 */
 	private restoreSelectionUI(): void {
 		if (!this.currentSvg) return;
 
-		// 遍历所有节点，为选中节点恢复按钮
+		// Iterate all nodes, restore buttons for selected nodes
 		this.currentSvg.selectAll(".node")
 			.each((d: any, i, nodes) => {
 				if (d.data.selected) {
 					const nodeElement = d3.select(nodes[i] as SVGGElement);
 					const dimensions = this.textMeasurer.getNodeDimensions(d.depth, d.data.text);
 
-					// 调用功能模块的方法
+					// Call feature module methods
 					this.buttonRenderer.renderPlusButton(nodeElement as any, d, dimensions);
 					this.aiAssistant.renderAIButton(nodeElement as any, d, dimensions);
 				}
@@ -935,12 +936,12 @@ export class RendererCoordinator implements MindMapRenderer {
 	}
 
 	/**
-	 * 恢复视图状态
-	 * 恢复之前保存的缩放和平移状态
+	 * Restore view state
+	 * Restore previously saved zoom and pan state
 	 */
 	private restoreViewState(): void {
 		if (this.currentZoomTransform && this.currentSvg && this.currentZoom) {
-			// 检查当前变换是否与保存的变换不同，避免重复应用
+			// Check if current transform differs from saved transform, avoid duplicate application
 			const svgNode = this.currentSvg.node();
 			if (!svgNode) {
 				return;
@@ -948,11 +949,11 @@ export class RendererCoordinator implements MindMapRenderer {
 			const currentTransform = d3.zoomTransform(svgNode);
 
 			if (currentTransform.toString() !== this.currentZoomTransform.toString()) {
-				// 应用之前保存的缩放变换
+				// Apply previously saved zoom transform
 				this.currentSvg
-					.call(this.currentZoom.transform, this.currentZoomTransform);
+					.call((selection) => this.currentZoom.transform(selection, this.currentZoomTransform));
 
-				// 同时更新内容组的变换
+				// Also update content group transform
 				if (this.currentContent) {
 					// Type assertion: D3 accepts ZoomTransform for attr("transform", ...)
 					this.currentContent.attr("transform", this.currentZoomTransform as any);
@@ -962,16 +963,16 @@ export class RendererCoordinator implements MindMapRenderer {
 	}
 
 	/**
-	 * 编辑新节点
-	 * 自动进入新创建节点的编辑模式
+	 * Edit new node
+	 * Automatically enter edit mode for newly created node
 	 */
 	private editNewNode(): void {
-		// 直接使用 this.selectedNode,它已经在 render 中被同步到正确的D3引用
+		// Use this.selectedNode directly, it has been synced to correct D3 reference in render()
 		if (!this.selectedNode || !this.currentSvg) {
 			return;
 		}
 
-		// 通过D3节点对象比较(而非数据对象比较)找到DOM元素
+		// Find DOM element through D3 node object comparison (not data object comparison)
 		const nodeElements = d3.selectAll(".nodes g");
 		const targetElement = nodeElements
 			.filter((d: any) => d === this.selectedNode)
@@ -979,7 +980,7 @@ export class RendererCoordinator implements MindMapRenderer {
 			.node() as HTMLDivElement;
 
 		if (targetElement) {
-			// 调用 NodeEditor 的方法
+			// Call NodeEditor method
 			this.nodeEditor.enableEditing(this.selectedNode, targetElement);
 		}
 	}
@@ -988,11 +989,11 @@ export class RendererCoordinator implements MindMapRenderer {
 		this.onDataUpdated?.();
 	}
 
-	// ========== Undo/Redo 公共方法 ==========
+	// ========== Undo/Redo Public Methods ==========
 
 	/**
-	 * 撤销上一次操作
-	 * @returns 成功返回 true，否则返回 false
+	 * Undo last operation
+	 * @returns true on success, false otherwise
 	 */
 	public undo(): boolean {
 
@@ -1003,19 +1004,19 @@ export class RendererCoordinator implements MindMapRenderer {
 		const previousData = this.undoManager.undo(this.currentData);
 
 		if (previousData && this.currentData) {
-			// 更新当前数据
+			// Update current data
 			this.currentData.rootNode = previousData.rootNode;
 			this.currentData.allNodes = previousData.allNodes;
 			this.currentData.maxLevel = previousData.maxLevel;
 
 
-			// 清除选中状态
+			// Clear selection state
 			this.clearSelection();
 
-			// ✅ 关键修复：通知视图数据已恢复，需要同步更新 mindMapData
+			// Key fix: Notify view that data has been restored, need to sync update mindMapData
 			this.onDataRestored?.(previousData);
 
-			// 触发数据更新（重新渲染和保存文件）
+			// Trigger data update (re-render and save file)
 			this.triggerDataUpdate();
 			return true;
 		}
@@ -1024,8 +1025,8 @@ export class RendererCoordinator implements MindMapRenderer {
 	}
 
 	/**
-	 * 重做上一次撤销的操作
-	 * @returns 成功返回 true，否则返回 false
+	 * Redo last undone operation
+	 * @returns true on success, false otherwise
 	 */
 	public redo(): boolean {
 
@@ -1036,19 +1037,19 @@ export class RendererCoordinator implements MindMapRenderer {
 		const nextData = this.undoManager.redo(this.currentData);
 
 		if (nextData && this.currentData) {
-			// 更新当前数据
+			// Update current data
 			this.currentData.rootNode = nextData.rootNode;
 			this.currentData.allNodes = nextData.allNodes;
 			this.currentData.maxLevel = nextData.maxLevel;
 
 
-			// 清除选中状态
+			// Clear selection state
 			this.clearSelection();
 
-			// ✅ 关键修复：通知视图数据已恢复，需要同步更新 mindMapData
+			// Key fix: Notify view that data has been restored, need to sync update mindMapData
 			this.onDataRestored?.(nextData);
 
-			// 触发数据更新（重新渲染和保存文件）
+			// Trigger data update (re-render and save file)
 			this.triggerDataUpdate();
 			return true;
 		}
@@ -1057,28 +1058,28 @@ export class RendererCoordinator implements MindMapRenderer {
 	}
 
 	/**
-	 * 检查是否可以撤销
+	 * Check if undo is available
 	 */
 	public canUndo(): boolean {
 		return this.undoManager.canUndo();
 	}
 
 	/**
-	 * 检查是否可以重做
+	 * Check if redo is available
 	 */
 	public canRedo(): boolean {
 		return this.undoManager.canRedo();
 	}
 
 	/**
-	 * 清空历史记录（加载新文件时调用）
+	 * Clear history (called when loading new file)
 	 */
 	public clearHistory(): void {
 		this.undoManager.clearHistory();
 	}
 
 	/**
-	 * 获取 UndoManager 实例（供外部访问，如 KeyboardManager）
+	 * Get UndoManager instance (for external access, e.g., KeyboardManager)
 	 */
 	public getUndoManager(): UndoManager {
 		return this.undoManager;
