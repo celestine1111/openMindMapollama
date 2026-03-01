@@ -78,7 +78,7 @@ export const en: MindMapMessages = {
 
 	// ==================== Validation (验证消息) ====================
 	validation: {
-		cannotEditRoot: 'Central topic (filename) cannot be modified',
+		cannotEditRoot: 'central topic (filename) cannot be modified',
 		cannotPasteRoot: 'Cannot paste to root node',
 		cannotCreateSiblingRoot: 'Cannot create sibling for root node',
 	},
@@ -104,19 +104,19 @@ export const en: MindMapMessages = {
 
 		// AI configuration
 		aiSection: 'AI configuration (OpenAI-compatible API)',
-		aiSectionDesc: 'Configure your AI API to enable intelligent features like automatic node suggestions.',
-		aiSecurity: '🔒 Security: your API key is encrypted using AES-GCM (256-bit) before storage. The encrypted key is stored in data.json and can only be decrypted on this device.',
+		aiSectionDesc: 'configure your AI API to enable intelligent features like automatic node suggestions.',
+		aiSecurity: '🔒 security: your API key is encrypted using AES-GCM (256-bit) before storage. The encrypted key is stored in data.json and can only be decrypted on this device.',
 
 		aiBaseUrl: 'OpenAI API base URL',
 		aiBaseUrlDesc: 'The base URL for your OpenAI-compatible API (e.g., https://api.openai.com/v1)',
 		aiBaseUrlPlaceholder: 'https://api.openai.com/v1',
 
 		aiApiKey: 'OpenAI API key',
-		aiApiKeyDesc: 'Your OpenAI API key (starts with sk-...)',
+		aiApiKeyDesc: 'your OpenAI API key (starts with sk-...)',
 		aiApiKeyPlaceholder: 'sk-...',
 
 		aiModel: 'Model name',
-		aiModelDesc: 'The model name to use (e.g., gpt-3.5-turbo, gpt-4, llama2, mistral, etc.)',
+		aiModelDesc: 'the model name to use (e.g., gpt-3.5-turbo, gpt-4, llama2, mistral, etc.)',
 		aiModelPlaceholder: 'gpt-3.5-turbo',
 
 		aiTestConnection: 'Test connection',
@@ -156,23 +156,23 @@ export const en: MindMapMessages = {
 		commandOpenAsMindmap: 'Open current file as mind map',
 
 		// Loading
-		loading: 'Loading openMindMap...',
-		initializing: 'Initializing...',
-		loadingFile: 'Loading file...',
+		loading: 'Loading openMindMap...',  // This is fine as it's the first word of the message
+		initializing: 'initializing...',
+		loadingFile: 'loading file...',
 
 		// Headers
 		appHeader: '🧠 openMindMap',
-		debugInfo: 'Debug Info:',
-		instanceFilePath: 'Instance filePath:',
-		stateLoaded: 'State loaded:',
-		activeFile: 'Active file:',
+		debugInfo: 'debug info:',
+		instanceFilePath: 'instance file path:',
+		stateLoaded: 'state loaded:',
+		activeFile: 'active file:',
 
 		// Context menu
-		createNewFile: 'New openMindMap file',
-		contextEdit: 'Edit',
-		contextCopy: 'Copy',
-		contextPaste: 'Paste',
-		contextDelete: 'Delete',
+		createNewFile: 'New openMindMap file',  // This is OK as first word of menu command
+		contextEdit: 'Edit',                   // This is OK as first word of menu command
+		contextCopy: 'Copy',                   // This is OK as first word of menu command
+		contextPaste: 'Paste',                 // This is OK as first word of menu command
+		contextDelete: 'Delete',               // This is OK as first word of menu command
 
 		// AI panel
 		aiSuggestionsTitle: '✨ AI Suggestions',
