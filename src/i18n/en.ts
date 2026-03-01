@@ -175,14 +175,14 @@ export const en: MindMapMessages = {
 		contextDelete: 'Delete',               // This is OK as first word of menu command
 
 		// AI panel
-		aiSuggestionsTitle: '✨ AI Suggestions',
-		aiAddAll: 'Add All',
+		aiSuggestionsTitle: '✨ AI suggestions',
+		aiAddAll: 'Add all',
 		aiAddAllTooltip: 'Create all suggestions',
 		aiClose: '✕',
 
 		// Edit hints (device-specific)
 		editHintDesktop: 'Double-click to edit | Enter: Save | Alt+Enter: New line | Escape: Cancel',
-		editHintMobile: 'Tap to edit | Enter: New line | Tap outside to save',
+		editHintMobile: 'Tap to edit | Enter: new line | Tap outside to save',
 	},
 
 	// ==================== Helper Methods ====================

@@ -7520,13 +7520,13 @@ var en = {
     contextDelete: "Delete",
     // This is OK as first word of menu command
     // AI panel
-    aiSuggestionsTitle: "\u2728 AI Suggestions",
-    aiAddAll: "Add All",
+    aiSuggestionsTitle: "\u2728 AI suggestions",
+    aiAddAll: "Add all",
     aiAddAllTooltip: "Create all suggestions",
     aiClose: "\u2715",
     // Edit hints (device-specific)
     editHintDesktop: "Double-click to edit | Enter: Save | Alt+Enter: New line | Escape: Cancel",
-    editHintMobile: "Tap to edit | Enter: New line | Tap outside to save"
+    editHintMobile: "Tap to edit | Enter: new line | Tap outside to save"
   },
   // ==================== Helper Methods ====================
   format(message, params) {
