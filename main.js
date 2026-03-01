@@ -9517,13 +9517,13 @@ var MindMapSettingTab = class extends import_obsidian7.PluginSettingTab {
     securityNotice.appendText(" The encrypted key is stored in ");
     securityNotice.appendChild(codeEl.cloneNode(true));
     securityNotice.appendText(" and can only be decrypted on this device.");
-    new import_obsidian7.Setting(containerEl).setName("OpenAI API base URL").setDesc("The base URL for your OpenAI-compatible API (e.g., https://api.openai.com/v1)").addText((text) => text.setPlaceholder("https://api.openai.com/v1").setValue(this.plugin.settings.openaiApiBaseUrl).onChange((value) => {
+    new import_obsidian7.Setting(containerEl).setName("OpenAI API base URL").setDesc("the base URL for your OpenAI-compatible API (e.g., https://api.openai.com/v1)").addText((text) => text.setPlaceholder("https://api.openai.com/v1").setValue(this.plugin.settings.openaiApiBaseUrl).onChange((value) => {
       void (async () => {
         this.plugin.settings.openaiApiBaseUrl = value;
         await this.plugin.saveSettings();
       })();
     }));
-    new import_obsidian7.Setting(containerEl).setName("API key").setDesc("Your API key").addText((text) => {
+    new import_obsidian7.Setting(containerEl).setName("API key").setDesc("your API key").addText((text) => {
       text.setPlaceholder("sk-...");
       text.setValue(this.plugin.settings.openaiApiKey);
       text.inputEl.type = "password";
@@ -9539,7 +9539,7 @@ var MindMapSettingTab = class extends import_obsidian7.PluginSettingTab {
         })();
       });
     });
-    new import_obsidian7.Setting(containerEl).setName("Model name").setDesc("The model name to use (e.g., gpt-3.5-turbo, gpt-4, llama2, mistral, etc.)").addText((text) => text.setPlaceholder("gpt-3.5-turbo").setValue(this.plugin.settings.openaiModel).onChange((value) => {
+    new import_obsidian7.Setting(containerEl).setName("Model name").setDesc("the model name to use (e.g., gpt-3.5-turbo, gpt-4, llama2, mistral, etc.)").addText((text) => text.setPlaceholder("gpt-3.5-turbo").setValue(this.plugin.settings.openaiModel).onChange((value) => {
       void (async () => {
         this.plugin.settings.openaiModel = value;
         await this.plugin.saveSettings();
