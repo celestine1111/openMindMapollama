@@ -934,7 +934,7 @@ class MindMapSettingTab extends PluginSettingTab {
 		// API Key
 		new Setting(containerEl)
 			.setName('API key')
-			.setDesc('your API key')
+			.setDesc('Your API key')
 			.addText(text => {
 				text.setPlaceholder('sk-...');
 				text.setValue(this.plugin.settings.openaiApiKey);
@@ -956,7 +956,7 @@ class MindMapSettingTab extends PluginSettingTab {
 		// Model Name
 		new Setting(containerEl)
 			.setName('Model name')
-			.setDesc('the model name to use (e.g., gpt-3.5-turbo, gpt-4, llama2, mistral, etc.)')
+			.setDesc('The model name to use (e.g., gpt-3.5-turbo, gpt-4, llama2, mistral, etc.)')
 			.addText(text => text
 				.setPlaceholder('gpt-3.5-turbo')
 				.setValue(this.plugin.settings.openaiModel)

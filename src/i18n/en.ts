@@ -104,19 +104,19 @@ export const en: MindMapMessages = {
 
 		// AI configuration
 		aiSection: 'AI configuration (OpenAI-compatible API)',
-		aiSectionDesc: 'configure your AI API to enable intelligent features like automatic node suggestions.',
-		aiSecurity: '🔒 security: your API key is encrypted using AES-GCM (256-bit) before storage. The encrypted key is stored in data.json and can only be decrypted on this device.',
+		aiSectionDesc: 'Configure your AI API to enable intelligent features like automatic node suggestions.',
+		aiSecurity: '🔒 Security: Your API key is encrypted using AES-GCM (256-bit) before storage. The encrypted key is stored in data.json and can only be decrypted on this device.',
 
 		aiBaseUrl: 'OpenAI API base URL',
 		aiBaseUrlDesc: 'The base URL for your OpenAI-compatible API (e.g., https://api.openai.com/v1)',
 		aiBaseUrlPlaceholder: 'https://api.openai.com/v1',
 
 		aiApiKey: 'OpenAI API key',
-		aiApiKeyDesc: 'your OpenAI API key (starts with sk-...)',
+		aiApiKeyDesc: 'Your OpenAI API key (starts with sk-...)',
 		aiApiKeyPlaceholder: 'sk-...',
 
 		aiModel: 'Model name',
-		aiModelDesc: 'the model name to use (e.g., gpt-3.5-turbo, gpt-4, llama2, mistral, etc.)',
+		aiModelDesc: 'The model name to use (e.g., gpt-3.5-turbo, gpt-4, llama2, mistral, etc.)',
 		aiModelPlaceholder: 'gpt-3.5-turbo',
 
 		aiTestConnection: 'Test connection',
@@ -157,15 +157,15 @@ export const en: MindMapMessages = {
 
 		// Loading
 		loading: 'Loading openMindMap...',  // This is fine as it's the first word of the message
-		initializing: 'initializing...',
-		loadingFile: 'loading file...',
+		initializing: 'Initializing...',
+		loadingFile: 'Loading file...',
 
 		// Headers
 		appHeader: '🧠 openMindMap',
-		debugInfo: 'debug info:',
-		instanceFilePath: 'instance file path:',
-		stateLoaded: 'state loaded:',
-		activeFile: 'active file:',
+		debugInfo: 'Debug info:',
+		instanceFilePath: 'Instance file path:',
+		stateLoaded: 'State loaded:',
+		activeFile: 'Active file:',
 
 		// Context menu
 		createNewFile: 'New openMindMap file',  // This is OK as first word of menu command
@@ -182,7 +182,7 @@ export const en: MindMapMessages = {
 
 		// Edit hints (device-specific)
 		editHintDesktop: 'Double-click to edit | Enter: Save | Alt+Enter: New line | Escape: Cancel',
-		editHintMobile: 'Tap to edit | Enter: new line | Tap outside to save',
+		editHintMobile: 'Tap to edit | Enter: New line | Tap outside to save',
 	},
 
 	// ==================== Helper Methods ====================
